@@ -20,7 +20,6 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Main Background */
 .stApp{
     background: linear-gradient(
         135deg,
@@ -30,15 +29,15 @@ st.markdown("""
     );
 }
 
-/* Hide Streamlit Branding */
 #MainMenu {visibility:hidden;}
 footer {visibility:hidden;}
 header {visibility:hidden;}
 
 /* Title */
 .main-title{
-    font-size:65px;
+    font-size:60px;
     font-weight:900;
+
     background:linear-gradient(
         90deg,
         #38bdf8,
@@ -48,8 +47,6 @@ header {visibility:hidden;}
 
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
-
-    margin-bottom:10px;
 }
 
 /* Subtitle */
@@ -58,28 +55,28 @@ header {visibility:hidden;}
     font-size:18px;
 }
 
-/* Cards */
+/* Card */
 .card{
     background:rgba(255,255,255,0.05);
     border:1px solid rgba(255,255,255,0.08);
     border-radius:20px;
-    padding:20px;
-    margin-bottom:15px;
+    padding:25px;
+    margin-bottom:20px;
 }
 
-/* File Upload */
+/* Upload */
 .stFileUploader{
     background:rgba(255,255,255,0.04);
+    padding:12px;
     border-radius:15px;
-    padding:15px;
 }
 
 /* Metrics */
 [data-testid="stMetric"]{
     background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.08);
     border-radius:15px;
     padding:15px;
+    border:1px solid rgba(255,255,255,0.08);
 }
 
 /* Download Button */
@@ -96,6 +93,7 @@ header {visibility:hidden;}
     border-radius:12px;
     height:50px;
     font-weight:bold;
+    font-size:16px;
 }
 
 </style>
@@ -108,17 +106,19 @@ header {visibility:hidden;}
 col1, col2 = st.columns([5, 1])
 
 with col1:
+
     st.markdown("""
     <div class="main-title">
         Abbreviation Expansion Tool
     </div>
 
     <div class="sub-title">
-        Automatically expand short forms using your business mapping file.
+        Smart Data Enrichment Utility for Standardizing Product and Business Attributes
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
+
     st.image(
         "https://pbs.twimg.com/media/GyJLJ06W4AAQRrN?format=png&name=large",
         width=180
@@ -127,7 +127,49 @@ with col2:
 st.markdown("---")
 
 # ==================================================
-# FILES SECTION
+# HOW IT WORKS
+# ==================================================
+
+st.markdown("""
+<div class="card">
+
+<h3 style="color:white;">
+📖 How It Works
+</h3>
+
+<p style="color:#cbd5e1;">
+This tool automatically expands abbreviations into full forms using a mapping file provided by the user.
+</p>
+
+<h4 style="color:white;">
+🚀 Steps to Use
+</h4>
+
+<ol style="color:#cbd5e1;">
+<li>Upload the Input Excel file containing abbreviations or text.</li>
+<li>Upload the Mapping Excel file.</li>
+<li>The mapping file must contain <b>Short Form</b> and <b>Full Form</b> columns.</li>
+<li>The application automatically scans and replaces abbreviations.</li>
+<li>Review the output preview.</li>
+<li>Download the processed Excel file.</li>
+</ol>
+
+<h4 style="color:white;">
+📂 Example Mapping File
+</h4>
+
+<ul style="color:#cbd5e1;">
+<li>AU → Australia</li>
+<li>UK → United Kingdom</li>
+<li>US → United States</li>
+<li>UAE → United Arab Emirates</li>
+</ul>
+
+</div>
+""", unsafe_allow_html=True)
+
+# ==================================================
+# FILE UPLOADS
 # ==================================================
 
 st.subheader("📂 Upload Files")
@@ -136,25 +178,25 @@ col1, col2 = st.columns(2)
 
 with col1:
     input_file = st.file_uploader(
-        "Input Excel File",
+        "Input File (.xlsx)",
         type=["xlsx"]
     )
 
 with col2:
     mapping_file = st.file_uploader(
-        "Mapping Excel File",
+        "Mapping File (.xlsx)",
         type=["xlsx"]
     )
 
 # ==================================================
-# PROCESS
+# PROCESS FILES
 # ==================================================
 
 if input_file and mapping_file:
 
     try:
 
-        with st.spinner("Processing records..."):
+        with st.spinner("Processing files..."):
 
             input_df = pd.read_excel(input_file)
             mapping_df = pd.read_excel(mapping_file)
@@ -214,6 +256,10 @@ if input_file and mapping_file:
                 "Updated Text"
             ]
 
+        # ==========================================
+        # SUCCESS
+        # ==========================================
+
         st.success("✅ Processing completed successfully")
 
         # ==========================================
@@ -223,8 +269,8 @@ if input_file and mapping_file:
         total_rows = len(output_df)
 
         updated_rows = (
-            output_df["Original Text"]
-            != output_df["Updated Text"]
+            output_df["Original Text"] !=
+            output_df["Updated Text"]
         ).sum()
 
         mapping_count = len(mapping_dict)
@@ -252,10 +298,10 @@ if input_file and mapping_file:
         st.markdown("---")
 
         # ==========================================
-        # RESULTS
+        # PREVIEW
         # ==========================================
 
-        st.subheader("📊 Results Preview")
+        st.subheader("📊 Output Preview")
 
         st.dataframe(
             output_df,
@@ -267,10 +313,10 @@ if input_file and mapping_file:
         # DOWNLOAD
         # ==========================================
 
-        excel_buffer = BytesIO()
+        buffer = BytesIO()
 
         with pd.ExcelWriter(
-            excel_buffer,
+            buffer,
             engine="openpyxl"
         ) as writer:
 
@@ -280,11 +326,11 @@ if input_file and mapping_file:
                 sheet_name="Output"
             )
 
-        excel_buffer.seek(0)
+        buffer.seek(0)
 
         st.download_button(
             label="📥 Download Output File",
-            data=excel_buffer,
+            data=buffer,
             file_name="Output.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
@@ -293,9 +339,18 @@ if input_file and mapping_file:
 
         st.error(f"❌ Error: {e}")
 
+# ==================================================
+# FOOTER
+# ==================================================
+
 st.markdown("""
 <br><hr>
-<p style="text-align:center;color:#94a3b8;">
-Abbreviation Expansion Tool | Pentland Data Enrichment Utility
+
+<p style="
+text-align:center;
+color:#94a3b8;
+font-size:14px;
+">
+Pentland Data Enrichment Utility | Abbreviation Expansion Tool
 </p>
 """, unsafe_allow_html=True)
