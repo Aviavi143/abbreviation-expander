@@ -20,27 +20,25 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Background */
+/* Main Background */
 .stApp{
     background: linear-gradient(
         135deg,
-        #020617 0%,
-        #0f172a 50%,
-        #1e293b 100%
+        #020617,
+        #0f172a,
+        #1e293b
     );
 }
 
-/* Hide Streamlit branding */
+/* Hide Streamlit Branding */
 #MainMenu {visibility:hidden;}
 footer {visibility:hidden;}
 header {visibility:hidden;}
 
-/* Main Title */
+/* Title */
 .main-title{
-    text-align:center;
     font-size:65px;
     font-weight:900;
-
     background:linear-gradient(
         90deg,
         #38bdf8,
@@ -56,23 +54,35 @@ header {visibility:hidden;}
 
 /* Subtitle */
 .sub-title{
-    text-align:center;
     color:#cbd5e1;
-    font-size:20px;
-    margin-bottom:35px;
+    font-size:18px;
 }
 
-/* Card */
-.glass-card{
+/* Cards */
+.card{
     background:rgba(255,255,255,0.05);
-    backdrop-filter:blur(15px);
+    border:1px solid rgba(255,255,255,0.08);
     border-radius:20px;
-    padding:25px;
-    border:1px solid rgba(255,255,255,0.1);
-    margin-bottom:20px;
+    padding:20px;
+    margin-bottom:15px;
 }
 
-/* Download button */
+/* File Upload */
+.stFileUploader{
+    background:rgba(255,255,255,0.04);
+    border-radius:15px;
+    padding:15px;
+}
+
+/* Metrics */
+[data-testid="stMetric"]{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:15px;
+    padding:15px;
+}
+
+/* Download Button */
 .stDownloadButton button{
     width:100%;
     background:linear-gradient(
@@ -83,25 +93,9 @@ header {visibility:hidden;}
 
     color:white;
     border:none;
-    border-radius:10px;
+    border-radius:12px;
     height:50px;
-    font-size:16px;
     font-weight:bold;
-}
-
-/* Upload Box */
-.stFileUploader{
-    background:rgba(255,255,255,0.04);
-    padding:10px;
-    border-radius:15px;
-}
-
-/* Metrics */
-[data-testid="stMetric"]{
-    background:rgba(255,255,255,0.05);
-    padding:15px;
-    border-radius:15px;
-    border:1px solid rgba(255,255,255,0.08);
 }
 
 </style>
@@ -111,71 +105,64 @@ header {visibility:hidden;}
 # HEADER
 # ==================================================
 
-st.markdown("""
-<div class="main-title">
-    Abbreviation Expansion Tool
-</div>
+col1, col2 = st.columns([5, 1])
 
-<div class="sub-title">
-    Convert Short Forms into Standardized Full Forms Automatically
-</div>
-""", unsafe_allow_html=True)
+with col1:
+    st.markdown("""
+    <div class="main-title">
+        Abbreviation Expansion Tool
+    </div>
+
+    <div class="sub-title">
+        Automatically expand short forms using your business mapping file.
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.image(
+        "https://pbs.twimg.com/media/GyJLJ06W4AAQRrN?format=png&name=large",
+        width=180
+    )
+
+st.markdown("---")
 
 # ==================================================
-# UPLOAD CARD
+# FILES SECTION
 # ==================================================
 
-st.markdown("""
-<div class="glass-card">
-    <h3 style="color:white;">
-        📂 Upload Files
-    </h3>
-
-    <p style="color:#cbd5e1;">
-        Upload the source file and mapping file.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+st.subheader("📂 Upload Files")
 
 col1, col2 = st.columns(2)
 
 with col1:
     input_file = st.file_uploader(
-        "📄 Input File",
+        "Input Excel File",
         type=["xlsx"]
     )
 
 with col2:
     mapping_file = st.file_uploader(
-        "📑 Mapping File",
+        "Mapping Excel File",
         type=["xlsx"]
     )
 
 # ==================================================
-# PROCESS FILES
+# PROCESS
 # ==================================================
 
 if input_file and mapping_file:
 
     try:
 
-        with st.spinner("Processing files..."):
+        with st.spinner("Processing records..."):
 
             input_df = pd.read_excel(input_file)
             mapping_df = pd.read_excel(mapping_file)
-
-            # ----------------------------------------
-            # Clean Column Names
-            # ----------------------------------------
 
             input_df.columns = input_df.columns.str.strip()
             mapping_df.columns = mapping_df.columns.str.strip()
 
             input_column = input_df.columns[0]
-
-            # ----------------------------------------
-            # Clean Mapping File
-            # ----------------------------------------
 
             mapping_df["Short Form"] = (
                 mapping_df["Short Form"]
@@ -190,20 +177,12 @@ if input_file and mapping_file:
                 .str.strip()
             )
 
-            # ----------------------------------------
-            # Create Dictionary
-            # ----------------------------------------
-
             mapping_dict = dict(
                 zip(
                     mapping_df["Short Form"],
                     mapping_df["Full Form"]
                 )
             )
-
-            # ----------------------------------------
-            # Replace Abbreviations
-            # ----------------------------------------
 
             def replace_abbreviations(text):
 
@@ -226,10 +205,6 @@ if input_file and mapping_file:
                     updated_text
                 ])
 
-            # ----------------------------------------
-            # Create Output
-            # ----------------------------------------
-
             output_df = input_df[input_column].apply(
                 replace_abbreviations
             )
@@ -239,48 +214,46 @@ if input_file and mapping_file:
                 "Updated Text"
             ]
 
-        # ==================================================
-        # SUCCESS MESSAGE
-        # ==================================================
+        st.success("✅ Processing completed successfully")
 
-        st.success(
-            f"✅ Successfully processed {len(output_df)} records"
-        )
-
-        # ==================================================
+        # ==========================================
         # METRICS
-        # ==================================================
+        # ==========================================
 
-        rows_updated = (
+        total_rows = len(output_df)
+
+        updated_rows = (
             output_df["Original Text"]
             != output_df["Updated Text"]
         ).sum()
 
-        c1, c2, c3 = st.columns(3)
+        mapping_count = len(mapping_dict)
 
-        with c1:
+        m1, m2, m3 = st.columns(3)
+
+        with m1:
             st.metric(
                 "Rows Processed",
-                len(output_df)
+                total_rows
             )
 
-        with c2:
+        with m2:
             st.metric(
                 "Rows Updated",
-                rows_updated
+                updated_rows
             )
 
-        with c3:
+        with m3:
             st.metric(
-                "Mapping Entries",
-                len(mapping_dict)
+                "Mapping Records",
+                mapping_count
             )
 
         st.markdown("---")
 
-        # ==================================================
+        # ==========================================
         # RESULTS
-        # ==================================================
+        # ==========================================
 
         st.subheader("📊 Results Preview")
 
@@ -290,49 +263,39 @@ if input_file and mapping_file:
             height=500
         )
 
-        # ==================================================
-        # CREATE DOWNLOAD FILE
-        # ==================================================
+        # ==========================================
+        # DOWNLOAD
+        # ==========================================
 
-        output = BytesIO()
+        excel_buffer = BytesIO()
 
         with pd.ExcelWriter(
-            output,
+            excel_buffer,
             engine="openpyxl"
         ) as writer:
 
             output_df.to_excel(
                 writer,
-                sheet_name="Output",
-                index=False
+                index=False,
+                sheet_name="Output"
             )
 
-        output.seek(0)
+        excel_buffer.seek(0)
 
         st.download_button(
             label="📥 Download Output File",
-            data=output,
+            data=excel_buffer,
             file_name="Output.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
     except Exception as e:
 
-        st.error(f"❌ Error: {str(e)}")
-
-# ==================================================
-# FOOTER
-# ==================================================
+        st.error(f"❌ Error: {e}")
 
 st.markdown("""
-<br><br>
-<hr>
-
-<p style="
-text-align:center;
-color:#94a3b8;
-font-size:14px;
-">
-Abbreviation Expansion Tool | Data Enrichment Automation
+<br><hr>
+<p style="text-align:center;color:#94a3b8;">
+Abbreviation Expansion Tool | Pentland Data Enrichment Utility
 </p>
 """, unsafe_allow_html=True)
