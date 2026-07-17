@@ -20,82 +20,64 @@ st.set_page_config(
 st.markdown("""
 <style>
 
+/* Background */
 .stApp{
-    background: linear-gradient(
-        135deg,
-        #020617,
-        #0f172a,
-        #1e293b
-    );
+    background: #0f172a;
 }
 
+/* Hide Streamlit elements */
 #MainMenu {visibility:hidden;}
 footer {visibility:hidden;}
 header {visibility:hidden;}
 
-/* Title */
+/* Header */
 .main-title{
-    font-size:60px;
-    font-weight:900;
-
-    background:linear-gradient(
-        90deg,
-        #38bdf8,
-        #67e8f9,
-        #ffffff
-    );
-
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+    font-size:52px;
+    font-weight:800;
+    color:white;
+    margin-bottom:5px;
 }
 
-/* Subtitle */
 .sub-title{
-    color:#cbd5e1;
-    font-size:18px;
+    color:#94a3b8;
+    font-size:16px;
 }
 
-/* Card */
-.card{
-    background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:20px;
-    padding:25px;
-    margin-bottom:20px;
-}
-
-/* Upload */
+/* Uploaders */
 .stFileUploader{
-    background:rgba(255,255,255,0.04);
-    padding:12px;
-    border-radius:15px;
+    background:#111827;
+    border-radius:12px;
+    padding:15px;
 }
 
 /* Metrics */
 [data-testid="stMetric"]{
-    background:rgba(255,255,255,0.05);
-    border-radius:15px;
-    padding:15px;
-    border:1px solid rgba(255,255,255,0.08);
+    background:#111827;
+    border:1px solid #1f2937;
+    border-radius:12px;
+    padding:12px;
+}
+
+/* Dataframe */
+[data-testid="stDataFrame"]{
+    border:1px solid #1f2937;
+    border-radius:12px;
 }
 
 /* Download Button */
 .stDownloadButton button{
     width:100%;
-    background:linear-gradient(
-        90deg,
-        #06b6d4,
-        #2563eb
-    );
-
+    height:50px;
+    background:#2563eb;
     color:white;
     border:none;
-    border-radius:12px;
-    height:50px;
+    border-radius:10px;
     font-weight:bold;
-    font-size:16px;
 }
 
+hr{
+    border-color:#1f2937;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -103,76 +85,42 @@ header {visibility:hidden;}
 # HEADER
 # ==================================================
 
-col1, col2 = st.columns([5, 1])
+col1, col2 = st.columns([6,1])
 
 with col1:
-
     st.markdown("""
     <div class="main-title">
         Abbreviation Expansion Tool
     </div>
 
     <div class="sub-title">
-        Smart Data Enrichment Utility for Standardizing Product and Business Attributes
+        Expand short forms into standardized values
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
-
     st.image(
         "https://pbs.twimg.com/media/GyJLJ06W4AAQRrN?format=png&name=large",
-        width=180
+        width=130
     )
 
-st.markdown("---")
+st.divider()
 
 # ==================================================
-# HOW IT WORKS
+# QUICK INSTRUCTIONS
 # ==================================================
 
-st.markdown("""
-<div class="card">
+st.info("""
+1️⃣ Upload Input File
 
-<h3 style="color:white;">
-📖 How It Works
-</h3>
+2️⃣ Upload Mapping File
 
-<p style="color:#cbd5e1;">
-This tool automatically expands abbreviations into full forms using a mapping file provided by the user.
-</p>
-
-<h4 style="color:white;">
-🚀 Steps to Use
-</h4>
-
-<ol style="color:#cbd5e1;">
-<li>Upload the Input Excel file containing abbreviations or text.</li>
-<li>Upload the Mapping Excel file.</li>
-<li>The mapping file must contain <b>Short Form</b> and <b>Full Form</b> columns.</li>
-<li>The application automatically scans and replaces abbreviations.</li>
-<li>Review the output preview.</li>
-<li>Download the processed Excel file.</li>
-</ol>
-
-<h4 style="color:white;">
-📂 Example Mapping File
-</h4>
-
-<ul style="color:#cbd5e1;">
-<li>AU → Australia</li>
-<li>UK → United Kingdom</li>
-<li>US → United States</li>
-<li>UAE → United Arab Emirates</li>
-</ul>
-
-</div>
-""", unsafe_allow_html=True)
+3️⃣ Download Processed Output
+""")
 
 # ==================================================
-# FILE UPLOADS
+# FILE UPLOAD SECTION
 # ==================================================
-
-st.subheader("📂 Upload Files")
 
 col1, col2 = st.columns(2)
 
@@ -196,7 +144,7 @@ if input_file and mapping_file:
 
     try:
 
-        with st.spinner("Processing files..."):
+        with st.spinner("Processing..."):
 
             input_df = pd.read_excel(input_file)
             mapping_df = pd.read_excel(mapping_file)
@@ -233,7 +181,7 @@ if input_file and mapping_file:
 
                 for short_form, full_form in mapping_dict.items():
 
-                    pattern = r"\\b" + re.escape(short_form) + r"\\b"
+                    pattern = r"\b" + re.escape(short_form) + r"\b"
 
                     updated_text = re.sub(
                         pattern,
@@ -257,66 +205,60 @@ if input_file and mapping_file:
             ]
 
         # ==========================================
-        # SUCCESS
-        # ==========================================
-
-        st.success("✅ Processing completed successfully")
-
-        # ==========================================
         # METRICS
         # ==========================================
 
         total_rows = len(output_df)
 
         updated_rows = (
-            output_df["Original Text"] !=
-            output_df["Updated Text"]
+            output_df["Original Text"]
+            != output_df["Updated Text"]
         ).sum()
 
         mapping_count = len(mapping_dict)
 
-        m1, m2, m3 = st.columns(3)
+        c1, c2, c3 = st.columns(3)
 
-        with m1:
+        with c1:
             st.metric(
                 "Rows Processed",
                 total_rows
             )
 
-        with m2:
+        with c2:
             st.metric(
                 "Rows Updated",
                 updated_rows
             )
 
-        with m3:
+        with c3:
             st.metric(
-                "Mapping Records",
+                "Mappings",
                 mapping_count
             )
 
-        st.markdown("---")
+        st.divider()
 
         # ==========================================
-        # PREVIEW
+        # RESULTS
         # ==========================================
 
-        st.subheader("📊 Output Preview")
+        st.subheader("Results")
 
         st.dataframe(
             output_df,
             use_container_width=True,
-            height=500
+            height=450
         )
 
         # ==========================================
-        # DOWNLOAD
+        # DOWNLOAD FILE
         # ==========================================
 
-        buffer = BytesIO()
+        excel_buffer = BytesIO()
 
         with pd.ExcelWriter(
-            buffer,
+            excel_buffer,
             engine="openpyxl"
         ) as writer:
 
@@ -326,31 +268,30 @@ if input_file and mapping_file:
                 sheet_name="Output"
             )
 
-        buffer.seek(0)
+        excel_buffer.seek(0)
 
         st.download_button(
-            label="📥 Download Output File",
-            data=buffer,
+            label="📥 Download Output",
+            data=excel_buffer,
             file_name="Output.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
     except Exception as e:
 
-        st.error(f"❌ Error: {e}")
+        st.error(f"Error: {str(e)}")
 
 # ==================================================
 # FOOTER
 # ==================================================
 
-st.markdown("""
-<br><hr>
-
-<p style="
-text-align:center;
-color:#94a3b8;
-font-size:14px;
-">
-Pentland Data Enrichment Utility | Abbreviation Expansion Tool
-</p>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <br>
+    <hr>
+    <center style='color:#94a3b8;'>
+    Pentland Data Enrichment Utility
+    </center>
+    """,
+    unsafe_allow_html=True
+)
